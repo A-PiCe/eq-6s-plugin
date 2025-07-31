@@ -1,0 +1,48 @@
+# Build directories
+build/
+build-*/
+**/build/
+
+# JUCE framework (downloaded separately)
+juce-framework/
+
+# Docker scripts
+dockcross-*
+
+# IDE files
+.vscode/
+.idea/
+*.user
+*.suo
+*.sdf
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Temporary files
+*.tmp
+*.temp
+*~
+
+# Compiled binaries
+*.exe
+*.dll
+*.so
+*.dylib
+*.vst3
+*.component
+*.au
+
+# CMake generated files
+CMakeCache.txt
+CMakeFiles/
+cmake_install.cmake
+Makefile
+*.cmake
+
+# Visual Studio files
+*.vcxproj
+*.vcxproj.filters
+*.vcxproj.user
+*.sln
