@@ -1,22 +1,22 @@
-cmake_minimum_required(VERSION 3.15)
+cmake_minimum_required(VERSION 3.10)
 
 project(EQ6S VERSION 1.0.0)
 
 set(CMAKE_CXX_STANDARD 17)
 
-add_subdirectory(/home/ubuntu/juce-framework JUCE)
+add_subdirectory(juce-framework JUCE)
 
 juce_add_plugin(EQ6S
-    COMPANY_NAME "YourCompany"
+    COMPANY_NAME "A-PiCe Audio"
     IS_SYNTH FALSE
     NEEDS_MIDI_INPUT FALSE
     NEEDS_MIDI_OUTPUT FALSE
     IS_MIDI_EFFECT FALSE
     EDITOR_WANTS_KEYBOARD_FOCUS FALSE
     COPY_PLUGIN_AFTER_BUILD TRUE
-    PLUGIN_MANUFACTURER_CODE Juce
+    PLUGIN_MANUFACTURER_CODE APce
     PLUGIN_CODE Eq6s
-    FORMATS AU VST3 Standalone
+    FORMATS VST3 Standalone
     PRODUCT_NAME "EQ-6S")
 
 juce_generate_juce_header(EQ6S)

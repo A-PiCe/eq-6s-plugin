@@ -1,0 +1,94 @@
+name: Build Windows VST Plugin
+
+on:
+  push:
+    branches: [ main, 'devin/*' ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build-windows:
+    runs-on: windows-latest
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      with:
+        submodules: recursive
+    
+    - name: Setup MSVC
+      uses: microsoft/setup-msbuild@v2
+    
+    - name: Install CMake
+      uses: lukka/get-cmake@latest
+    
+    - name: Download JUCE Framework
+      run: |
+        Invoke-WebRequest -Uri "https://github.com/juce-framework/JUCE/releases/download/7.0.12/juce-7.0.12-windows.zip" -OutFile "juce.zip"
+        Expand-Archive -Path "juce.zip" -DestinationPath "."
+        Rename-Item "juce-7.0.12-windows" "juce-framework"
+    
+    - name: Configure CMake for VST3
+      run: |
+        mkdir build-vst3
+        cd build-vst3
+        cmake .. -G "Visual Studio 17 2022" -A x64 -DCMAKE_BUILD_TYPE=Release
+    
+    - name: Build VST3
+      run: |
+        cd build-vst3
+        cmake --build . --config Release
+    
+    - name: Configure CMake for VST2
+      run: |
+        mkdir build-vst2
+        cd build-vst2
+        cmake .. -G "Visual Studio 17 2022" -A x64 -DCMAKE_BUILD_TYPE=Release -DJUCE_VST2_SDK_PATH="${{ github.workspace }}/VST2_SDK"
+    
+    - name: Download VST2 SDK (if available)
+      continue-on-error: true
+      run: |
+        # VST2 SDK is no longer officially available, but we'll try to build without it
+        echo "VST2 SDK not available - building VST3 only"
+    
+    - name: Build VST2 (if SDK available)
+      continue-on-error: true
+      run: |
+        cd build-vst2
+        cmake --build . --config Release
+    
+    - name: Package Windows Binaries
+      run: |
+        mkdir -p "Windows-Binaries/VST3"
+        mkdir -p "Windows-Binaries/VST2"
+        
+        # Copy VST3 files
+        if (Test-Path "build-vst3/EQ6S_artefacts/Release/VST3/EQ-6S.vst3") {
+          Copy-Item -Recurse "build-vst3/EQ6S_artefacts/Release/VST3/EQ-6S.vst3" "Windows-Binaries/VST3/"
+        }
+        
+        # Copy VST2 files if they exist
+        if (Test-Path "build-vst2/EQ6S_artefacts/Release/VST/EQ-6S.dll") {
+          Copy-Item "build-vst2/EQ6S_artefacts/Release/VST/EQ-6S.dll" "Windows-Binaries/VST2/"
+        }
+        
+        # Copy standalone if it exists
+        if (Test-Path "build-vst3/EQ6S_artefacts/Release/Standalone/EQ-6S.exe") {
+          Copy-Item "build-vst3/EQ6S_artefacts/Release/Standalone/EQ-6S.exe" "Windows-Binaries/"
+        }
+    
+    - name: Upload Windows Binaries
+      uses: actions/upload-artifact@v4
+      with:
+        name: EQ6S-Windows-Binaries
+        path: Windows-Binaries/
+        retention-days: 30
+    
+    - name: List built files for debugging
+      run: |
+        echo "=== VST3 Build Output ==="
+        Get-ChildItem -Recurse build-vst3/EQ6S_artefacts/ -ErrorAction SilentlyContinue
+        echo "=== VST2 Build Output ==="
+        Get-ChildItem -Recurse build-vst2/EQ6S_artefacts/ -ErrorAction SilentlyContinue
+        echo "=== Packaged Binaries ==="
+        Get-ChildItem -Recurse Windows-Binaries/ -ErrorAction SilentlyContinue
