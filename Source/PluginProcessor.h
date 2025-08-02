@@ -42,7 +42,9 @@ private:
     void updateFilters();
     juce::AudioProcessorValueTreeState::ParameterLayout createParameterLayout();
     float applySaturation(float inputSample, float intensity);
-
+    float applyInputSaturation(float inputSample, float gainDb);
+    
+    // EQ Band Filters
     juce::dsp::IIR::Filter<float> lowShelfFilter;      // Band 1: 20-55Hz Low-Shelf
     juce::dsp::IIR::Filter<float> bellFilter1;        // Band 2: 80-150Hz Bell
     juce::dsp::IIR::Filter<float> bellFilter2;        // Band 3: 350-700Hz Bell  
@@ -50,10 +52,17 @@ private:
     juce::dsp::IIR::Filter<float> bellFilter4;        // Band 5: 3000-8000Hz Bell
     juce::dsp::IIR::Filter<float> highShelfFilter;    // Band 6: 8-16kHz High-Shelf
     
-    juce::dsp::IIR::Filter<float> highPassFilter1;    // HPF Stage 1: 15/20/30 Hz (24 dB/octave)
-    juce::dsp::IIR::Filter<float> highPassFilter2;    // HPF Stage 2: 15/20/30 Hz (24 dB/octave)
-    juce::dsp::IIR::Filter<float> lowPassFilter1;     // LPF Stage 1: 16/17/18 kHz (24 dB/octave)
-    juce::dsp::IIR::Filter<float> lowPassFilter2;     // LPF Stage 2: 16/17/18 kHz (24 dB/octave)
+    // HPF Filters - 28 dB/octave (4 stages of 7dB each)
+    juce::dsp::IIR::Filter<float> highPassFilter1;    // HPF Stage 1
+    juce::dsp::IIR::Filter<float> highPassFilter2;    // HPF Stage 2
+    juce::dsp::IIR::Filter<float> highPassFilter3;    // HPF Stage 3
+    juce::dsp::IIR::Filter<float> highPassFilter4;    // HPF Stage 4
+    
+    // LPF Filters - 28 dB/octave (4 stages of 7dB each)
+    juce::dsp::IIR::Filter<float> lowPassFilter1;     // LPF Stage 1
+    juce::dsp::IIR::Filter<float> lowPassFilter2;     // LPF Stage 2
+    juce::dsp::IIR::Filter<float> lowPassFilter3;     // LPF Stage 3
+    juce::dsp::IIR::Filter<float> lowPassFilter4;     // LPF Stage 4
     
     double currentSampleRate = 44100.0;
 

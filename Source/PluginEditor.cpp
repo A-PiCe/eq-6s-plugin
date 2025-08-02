@@ -6,6 +6,42 @@ EQ6SAudioProcessorEditor::EQ6SAudioProcessorEditor (EQ6SAudioProcessor& p)
 {
     setSize (900, 500);
 
+    setupInputGainKnobStyle(inputGainSlider);
+    addAndMakeVisible(inputGainSlider);
+    inputGainLabel.setText("INPUT", juce::dontSendNotification);
+    inputGainLabel.setJustificationType(juce::Justification::centred);
+    inputGainLabel.setColour(juce::Label::textColourId, juce::Colour(0xFFF5F5DC));
+    addAndMakeVisible(inputGainLabel);
+
+    setupOutputGainKnobStyle(outputGainSlider);
+    addAndMakeVisible(outputGainSlider);
+    outputGainLabel.setText("OUTPUT", juce::dontSendNotification);
+    outputGainLabel.setJustificationType(juce::Justification::centred);
+    outputGainLabel.setColour(juce::Label::textColourId, juce::Colour(0xFFF5F5DC));
+    addAndMakeVisible(outputGainLabel);
+
+    setupSwitchStyle(hpfSwitch);
+    hpfSwitch.addItem("Off", 1);
+    hpfSwitch.addItem("20Hz", 2);
+    hpfSwitch.addItem("30Hz", 3);
+    hpfSwitch.addItem("50Hz", 4);
+    addAndMakeVisible(hpfSwitch);
+    hpfSwitchLabel.setText("HPF", juce::dontSendNotification);
+    hpfSwitchLabel.setJustificationType(juce::Justification::centred);
+    hpfSwitchLabel.setColour(juce::Label::textColourId, juce::Colour(0xFFF5F5DC));
+    addAndMakeVisible(hpfSwitchLabel);
+
+    setupSwitchStyle(lpfSwitch);
+    lpfSwitch.addItem("Off", 1);
+    lpfSwitch.addItem("8k", 2);
+    lpfSwitch.addItem("10k", 3);
+    lpfSwitch.addItem("14k", 4);
+    addAndMakeVisible(lpfSwitch);
+    lpfSwitchLabel.setText("LPF", juce::dontSendNotification);
+    lpfSwitchLabel.setJustificationType(juce::Justification::centred);
+    lpfSwitchLabel.setColour(juce::Label::textColourId, juce::Colour(0xFFF5F5DC));
+    addAndMakeVisible(lpfSwitchLabel);
+
     setupKnobStyle(band1GainSlider, true);
     setupKnobStyle(band1FreqSlider);
     addAndMakeVisible(band1GainSlider);
@@ -121,6 +157,12 @@ EQ6SAudioProcessorEditor::EQ6SAudioProcessorEditor (EQ6SAudioProcessor& p)
     
     hpfAttachment = std::make_unique<juce::AudioProcessorValueTreeState::ComboBoxAttachment>(params, "hpf_freq", hpfSelector);
     lpfAttachment = std::make_unique<juce::AudioProcessorValueTreeState::ComboBoxAttachment>(params, "lpf_freq", lpfSelector);
+    
+    inputGainAttachment = std::make_unique<juce::AudioProcessorValueTreeState::SliderAttachment>(params, "input_gain", inputGainSlider);
+    outputGainAttachment = std::make_unique<juce::AudioProcessorValueTreeState::SliderAttachment>(params, "output_gain", outputGainSlider);
+    
+    hpfSwitchAttachment = std::make_unique<juce::AudioProcessorValueTreeState::ComboBoxAttachment>(params, "hpf_switch", hpfSwitch);
+    lpfSwitchAttachment = std::make_unique<juce::AudioProcessorValueTreeState::ComboBoxAttachment>(params, "lpf_switch", lpfSwitch);
 }
 
 EQ6SAudioProcessorEditor::~EQ6SAudioProcessorEditor()
@@ -142,6 +184,39 @@ void EQ6SAudioProcessorEditor::setupKnobStyle(juce::Slider& slider, bool isLarge
     {
         slider.setTextBoxStyle(juce::Slider::TextBoxBelow, false, 80, 25);
     }
+}
+
+void EQ6SAudioProcessorEditor::setupInputGainKnobStyle(juce::Slider& slider)
+{
+    slider.setSliderStyle(juce::Slider::RotaryHorizontalVerticalDrag);
+    slider.setTextBoxStyle(juce::Slider::TextBoxBelow, false, 80, 25);
+    slider.setColour(juce::Slider::rotarySliderFillColourId, juce::Colour(0xFFFF6B35));
+    slider.setColour(juce::Slider::rotarySliderOutlineColourId, juce::Colour(0xFFD2691E));
+    slider.setColour(juce::Slider::thumbColourId, juce::Colour(0xFFFF8C42));
+    slider.setColour(juce::Slider::textBoxTextColourId, juce::Colour(0xFFF5F5DC));
+    slider.setColour(juce::Slider::textBoxBackgroundColourId, juce::Colours::transparentBlack);
+    slider.setColour(juce::Slider::textBoxOutlineColourId, juce::Colours::transparentBlack);
+}
+
+void EQ6SAudioProcessorEditor::setupOutputGainKnobStyle(juce::Slider& slider)
+{
+    slider.setSliderStyle(juce::Slider::RotaryHorizontalVerticalDrag);
+    slider.setTextBoxStyle(juce::Slider::TextBoxBelow, false, 80, 25);
+    slider.setColour(juce::Slider::rotarySliderFillColourId, juce::Colour(0xFF4A90E2));
+    slider.setColour(juce::Slider::rotarySliderOutlineColourId, juce::Colour(0xFF2E5984));
+    slider.setColour(juce::Slider::thumbColourId, juce::Colour(0xFF6BB6FF));
+    slider.setColour(juce::Slider::textBoxTextColourId, juce::Colour(0xFFF5F5DC));
+    slider.setColour(juce::Slider::textBoxBackgroundColourId, juce::Colours::transparentBlack);
+    slider.setColour(juce::Slider::textBoxOutlineColourId, juce::Colours::transparentBlack);
+}
+
+void EQ6SAudioProcessorEditor::setupSwitchStyle(juce::ComboBox& comboBox)
+{
+    comboBox.setColour(juce::ComboBox::backgroundColourId, juce::Colour(0xFF3D2317));
+    comboBox.setColour(juce::ComboBox::textColourId, juce::Colour(0xFFF5F5DC));
+    comboBox.setColour(juce::ComboBox::outlineColourId, juce::Colour(0xFF654321));
+    comboBox.setColour(juce::ComboBox::buttonColourId, juce::Colour(0xFF654321));
+    comboBox.setColour(juce::ComboBox::arrowColourId, juce::Colour(0xFFF5F5DC));
 }
 
 void EQ6SAudioProcessorEditor::setupComboBoxStyle(juce::ComboBox& comboBox)
@@ -192,45 +267,60 @@ void EQ6SAudioProcessorEditor::resized()
     int largeKnobSize = 80;
     int smallKnobSize = 50;
     int spacing = 10;
+    
+    int inputX = 20;
+    inputGainSlider.setBounds(inputX, centerY - 20, largeKnobSize, largeKnobSize);
+    inputGainLabel.setBounds(inputX, centerY + largeKnobSize + 10, largeKnobSize, 20);
+    
+    hpfSwitch.setBounds(inputX, centerY - 120, largeKnobSize, 30);
+    hpfSwitchLabel.setBounds(inputX, centerY - 150, largeKnobSize, 20);
 
+    int sawtoothOffsets[] = {0, -30, 30, -15, 15, -45};
+    
     int band1X = startX;
-    band1GainSlider.setBounds(band1X, centerY - 20, largeKnobSize, largeKnobSize);
-    band1FreqSlider.setBounds(band1X + 15, centerY + largeKnobSize + spacing, smallKnobSize, smallKnobSize);
-    band1Label.setBounds(band1X, centerY - 50, largeKnobSize, 20);
+    band1GainSlider.setBounds(band1X, centerY - 20 + sawtoothOffsets[0], largeKnobSize, largeKnobSize);
+    band1FreqSlider.setBounds(band1X + 15, centerY + largeKnobSize + spacing + sawtoothOffsets[0], smallKnobSize, smallKnobSize);
+    band1Label.setBounds(band1X, centerY - 50 + sawtoothOffsets[0], largeKnobSize, 20);
 
     int band2X = startX + bandWidth;
-    band2GainSlider.setBounds(band2X, centerY - 20, largeKnobSize, largeKnobSize);
-    band2FreqSlider.setBounds(band2X + 15, centerY + largeKnobSize + spacing, smallKnobSize, smallKnobSize);
-    band2QSlider.setBounds(band2X - 15, centerY + largeKnobSize + spacing, smallKnobSize, smallKnobSize);
-    band2Label.setBounds(band2X, centerY - 50, largeKnobSize, 20);
+    band2GainSlider.setBounds(band2X, centerY - 20 + sawtoothOffsets[1], largeKnobSize, largeKnobSize);
+    band2FreqSlider.setBounds(band2X + 15, centerY + largeKnobSize + spacing + sawtoothOffsets[1], smallKnobSize, smallKnobSize);
+    band2QSlider.setBounds(band2X - 15, centerY + largeKnobSize + spacing + sawtoothOffsets[1], smallKnobSize, smallKnobSize);
+    band2Label.setBounds(band2X, centerY - 50 + sawtoothOffsets[1], largeKnobSize, 20);
 
     int band3X = startX + bandWidth * 2;
-    band3GainSlider.setBounds(band3X, centerY - 20, largeKnobSize, largeKnobSize);
-    band3FreqSlider.setBounds(band3X + 15, centerY - largeKnobSize - spacing - smallKnobSize, smallKnobSize, smallKnobSize);
-    band3QSlider.setBounds(band3X - 15, centerY - largeKnobSize - spacing - smallKnobSize, smallKnobSize, smallKnobSize);
-    band3Label.setBounds(band3X, centerY - 50, largeKnobSize, 20);
+    band3GainSlider.setBounds(band3X, centerY - 20 + sawtoothOffsets[2], largeKnobSize, largeKnobSize);
+    band3FreqSlider.setBounds(band3X + 15, centerY - largeKnobSize - spacing - smallKnobSize + sawtoothOffsets[2], smallKnobSize, smallKnobSize);
+    band3QSlider.setBounds(band3X - 15, centerY - largeKnobSize - spacing - smallKnobSize + sawtoothOffsets[2], smallKnobSize, smallKnobSize);
+    band3Label.setBounds(band3X, centerY - 50 + sawtoothOffsets[2], largeKnobSize, 20);
 
     int band4X = startX + bandWidth * 3;
-    band4GainSlider.setBounds(band4X, centerY - 20, largeKnobSize, largeKnobSize);
-    band4FreqSlider.setBounds(band4X + 15, centerY + largeKnobSize + spacing, smallKnobSize, smallKnobSize);
-    band4QSlider.setBounds(band4X - 15, centerY + largeKnobSize + spacing, smallKnobSize, smallKnobSize);
-    band4Label.setBounds(band4X, centerY - 50, largeKnobSize, 20);
+    band4GainSlider.setBounds(band4X, centerY - 20 + sawtoothOffsets[3], largeKnobSize, largeKnobSize);
+    band4FreqSlider.setBounds(band4X + 15, centerY + largeKnobSize + spacing + sawtoothOffsets[3], smallKnobSize, smallKnobSize);
+    band4QSlider.setBounds(band4X - 15, centerY + largeKnobSize + spacing + sawtoothOffsets[3], smallKnobSize, smallKnobSize);
+    band4Label.setBounds(band4X, centerY - 50 + sawtoothOffsets[3], largeKnobSize, 20);
 
     int band5X = startX + bandWidth * 4;
-    band5GainSlider.setBounds(band5X, centerY - 20, largeKnobSize, largeKnobSize);
-    band5FreqSlider.setBounds(band5X + 15, centerY - largeKnobSize - spacing - smallKnobSize, smallKnobSize, smallKnobSize);
-    band5QSlider.setBounds(band5X - 15, centerY - largeKnobSize - spacing - smallKnobSize, smallKnobSize, smallKnobSize);
-    band5Label.setBounds(band5X, centerY - 50, largeKnobSize, 20);
+    band5GainSlider.setBounds(band5X, centerY - 20 + sawtoothOffsets[4], largeKnobSize, largeKnobSize);
+    band5FreqSlider.setBounds(band5X + 15, centerY - largeKnobSize - spacing - smallKnobSize + sawtoothOffsets[4], smallKnobSize, smallKnobSize);
+    band5QSlider.setBounds(band5X - 15, centerY - largeKnobSize - spacing - smallKnobSize + sawtoothOffsets[4], smallKnobSize, smallKnobSize);
+    band5Label.setBounds(band5X, centerY - 50 + sawtoothOffsets[4], largeKnobSize, 20);
 
     int band6X = startX + bandWidth * 5;
-    band6GainSlider.setBounds(band6X, centerY - 20, largeKnobSize, largeKnobSize);
-    band6FreqSlider.setBounds(band6X + 15, centerY + largeKnobSize + spacing, smallKnobSize, smallKnobSize);
-    band6Label.setBounds(band6X, centerY - 50, largeKnobSize, 20);
+    band6GainSlider.setBounds(band6X, centerY - 20 + sawtoothOffsets[5], largeKnobSize, largeKnobSize);
+    band6FreqSlider.setBounds(band6X + 15, centerY + largeKnobSize + spacing + sawtoothOffsets[5], smallKnobSize, smallKnobSize);
+    band6Label.setBounds(band6X, centerY - 50 + sawtoothOffsets[5], largeKnobSize, 20);
+
+    int outputX = startX + bandWidth * 6 + 20;
+    outputGainSlider.setBounds(outputX, centerY - 20, largeKnobSize, largeKnobSize);
+    outputGainLabel.setBounds(outputX, centerY + largeKnobSize + 10, largeKnobSize, 20);
+    
+    lpfSwitch.setBounds(outputX, centerY - 120, largeKnobSize, 30);
+    lpfSwitchLabel.setBounds(outputX, centerY - 150, largeKnobSize, 20);
 
     int filterX = 20;
     hpfSelector.setBounds(filterX, 120, 80, 30);
     hpfLabel.setBounds(filterX, 100, 80, 20);
-    
     lpfSelector.setBounds(filterX, 180, 80, 30);
     lpfLabel.setBounds(filterX, 160, 80, 20);
 }

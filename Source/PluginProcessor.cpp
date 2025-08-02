@@ -109,6 +109,12 @@ juce::AudioProcessorValueTreeState::ParameterLayout EQ6SAudioProcessor::createPa
     parameters.push_back(std::make_unique<juce::AudioParameterChoice>("hpf_freq", "HPF Freq", juce::StringArray{"15 Hz", "20 Hz", "30 Hz"}, 1));
     parameters.push_back(std::make_unique<juce::AudioParameterChoice>("lpf_freq", "LPF Freq", juce::StringArray{"16 kHz", "17 kHz", "18 kHz"}, 1));
 
+    parameters.push_back(std::make_unique<juce::AudioParameterFloat>("input_gain", "Input Gain", -20.0f, 20.0f, 0.0f));
+    parameters.push_back(std::make_unique<juce::AudioParameterFloat>("output_gain", "Output Gain", -20.0f, 20.0f, 0.0f));
+    
+    parameters.push_back(std::make_unique<juce::AudioParameterChoice>("hpf_switch", "HPF Switch", juce::StringArray{"Off", "20Hz", "30Hz", "50Hz"}, 0));
+    parameters.push_back(std::make_unique<juce::AudioParameterChoice>("lpf_switch", "LPF Switch", juce::StringArray{"Off", "8k", "10k", "14k"}, 0));
+
     return { parameters.begin(), parameters.end() };
 }
 
@@ -138,6 +144,34 @@ float EQ6SAudioProcessor::applySaturation(float inputSample, float intensity)
     return normalizedInput + (output - normalizedInput) * intensity;
 }
 
+float EQ6SAudioProcessor::applyInputSaturation(float inputSample, float gainDb)
+{
+    if (gainDb <= 0.0f)
+        return inputSample * juce::Decibels::decibelsToGain(gainDb);
+    
+    float gain = juce::Decibels::decibelsToGain(gainDb);
+    float drivenSample = inputSample * gain;
+    
+    float intensity = gainDb / 20.0f;
+    float normalizedInput = juce::jlimit(-1.0f, 1.0f, drivenSample);
+    
+    float output;
+    if (normalizedInput >= 0.0f)
+    {
+        float x = normalizedInput;
+        output = x - (x * x * x) / 3.0f + (x * x * x * x * x) / 5.0f;
+    }
+    else
+    {
+        float x = normalizedInput;
+        output = x + (x * x * x) / 4.0f - (x * x * x * x * x) / 6.0f;
+    }
+    
+    output = std::tanh(output * 0.8f);
+    
+    return normalizedInput + (output - normalizedInput) * intensity;
+}
+
 void EQ6SAudioProcessor::prepareToPlay (double sampleRate, int samplesPerBlock)
 {
     currentSampleRate = sampleRate;
@@ -155,8 +189,12 @@ void EQ6SAudioProcessor::prepareToPlay (double sampleRate, int samplesPerBlock)
     highShelfFilter.prepare(spec);
     highPassFilter1.prepare(spec);
     highPassFilter2.prepare(spec);
+    highPassFilter3.prepare(spec);
+    highPassFilter4.prepare(spec);
     lowPassFilter1.prepare(spec);
     lowPassFilter2.prepare(spec);
+    lowPassFilter3.prepare(spec);
+    lowPassFilter4.prepare(spec);
     
     updateFilters();
 }
@@ -208,6 +246,24 @@ void EQ6SAudioProcessor::updateFilters()
     auto lpfCoeffs = juce::dsp::IIR::Coefficients<float>::makeLowPass(currentSampleRate, lpfFreqs[lpfChoice], 0.707f);
     lowPassFilter1.coefficients = lpfCoeffs;
     lowPassFilter2.coefficients = lpfCoeffs;
+    
+    auto hpfSwitchChoice = static_cast<int>(valueTreeState.getRawParameterValue("hpf_switch")->load());
+    if (hpfSwitchChoice > 0)
+    {
+        float hpfSwitchFreqs[] = {20.0f, 30.0f, 50.0f};
+        auto hpfSwitchCoeffs = juce::dsp::IIR::Coefficients<float>::makeHighPass(currentSampleRate, hpfSwitchFreqs[hpfSwitchChoice - 1], 0.707f);
+        highPassFilter3.coefficients = hpfSwitchCoeffs;
+        highPassFilter4.coefficients = hpfSwitchCoeffs;
+    }
+    
+    auto lpfSwitchChoice = static_cast<int>(valueTreeState.getRawParameterValue("lpf_switch")->load());
+    if (lpfSwitchChoice > 0)
+    {
+        float lpfSwitchFreqs[] = {8000.0f, 10000.0f, 14000.0f};
+        auto lpfSwitchCoeffs = juce::dsp::IIR::Coefficients<float>::makeLowPass(currentSampleRate, lpfSwitchFreqs[lpfSwitchChoice - 1], 0.707f);
+        lowPassFilter3.coefficients = lpfSwitchCoeffs;
+        lowPassFilter4.coefficients = lpfSwitchCoeffs;
+    }
 }
 
 void EQ6SAudioProcessor::releaseResources()
@@ -246,6 +302,21 @@ void EQ6SAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::M
 
     updateFilters();
 
+    // Apply input gain with saturation
+    auto inputGainDb = valueTreeState.getRawParameterValue("input_gain")->load();
+    if (std::abs(inputGainDb) > 0.001f)
+    {
+        for (int channel = 0; channel < totalNumInputChannels; ++channel)
+        {
+            auto* channelData = buffer.getWritePointer(channel);
+            for (int sample = 0; sample < buffer.getNumSamples(); ++sample)
+            {
+                channelData[sample] = applyInputSaturation(channelData[sample], inputGainDb);
+            }
+        }
+    }
+
+    // Existing EQ band saturation
     float saturationIntensity = 0.0f;
     for (int band = 1; band <= 6; ++band)
     {
@@ -253,10 +324,10 @@ void EQ6SAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::M
         if (gainParam != nullptr)
         {
             float gainValue = std::abs(*gainParam);
-            saturationIntensity += gainValue / 48.0f; // Normalize (6 bands * 8dB max = 48dB)
+            saturationIntensity += gainValue / 48.0f;
         }
     }
-    saturationIntensity = juce::jlimit(0.0f, 0.3f, saturationIntensity); // Limit max saturation
+    saturationIntensity = juce::jlimit(0.0f, 0.3f, saturationIntensity);
 
     if (saturationIntensity > 0.001f)
     {
@@ -275,14 +346,44 @@ void EQ6SAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::M
 
     highPassFilter1.process(context);
     highPassFilter2.process(context);
+    
+    auto hpfSwitchChoice = static_cast<int>(valueTreeState.getRawParameterValue("hpf_switch")->load());
+    if (hpfSwitchChoice > 0)
+    {
+        highPassFilter3.process(context);
+        highPassFilter4.process(context);
+    }
+    
     lowShelfFilter.process(context);
     bellFilter1.process(context);
     bellFilter2.process(context);
     bellFilter3.process(context);
     bellFilter4.process(context);
     highShelfFilter.process(context);
+    
     lowPassFilter1.process(context);
     lowPassFilter2.process(context);
+    
+    auto lpfSwitchChoice = static_cast<int>(valueTreeState.getRawParameterValue("lpf_switch")->load());
+    if (lpfSwitchChoice > 0)
+    {
+        lowPassFilter3.process(context);
+        lowPassFilter4.process(context);
+    }
+    
+    auto outputGainDb = valueTreeState.getRawParameterValue("output_gain")->load();
+    if (std::abs(outputGainDb) > 0.001f)
+    {
+        auto outputGain = juce::Decibels::decibelsToGain(outputGainDb);
+        for (int channel = 0; channel < totalNumInputChannels; ++channel)
+        {
+            auto* channelData = buffer.getWritePointer(channel);
+            for (int sample = 0; sample < buffer.getNumSamples(); ++sample)
+            {
+                channelData[sample] *= outputGain;
+            }
+        }
+    }
 }
 
 bool EQ6SAudioProcessor::hasEditor() const

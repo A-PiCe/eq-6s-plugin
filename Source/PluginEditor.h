@@ -15,6 +15,12 @@ public:
 private:
     EQ6SAudioProcessor& audioProcessor;
 
+    // Input/Output Gain Controls
+    juce::Slider inputGainSlider, outputGainSlider;
+    
+    // HPF/LPF Switch Controls
+    juce::ComboBox hpfSwitch, lpfSwitch;
+
     // EQ Band Controls (6 bands)
     juce::Slider band1FreqSlider, band1GainSlider;
     juce::Slider band2FreqSlider, band2GainSlider, band2QSlider;
@@ -23,10 +29,13 @@ private:
     juce::Slider band5FreqSlider, band5GainSlider, band5QSlider;
     juce::Slider band6FreqSlider, band6GainSlider;
 
-    // Cut Filter Controls
+    // Legacy Cut Filter Controls (keeping for compatibility)
     juce::ComboBox hpfSelector, lpfSelector;
 
     // Attachments for parameter binding
+    std::unique_ptr<juce::AudioProcessorValueTreeState::SliderAttachment> inputGainAttachment, outputGainAttachment;
+    std::unique_ptr<juce::AudioProcessorValueTreeState::ComboBoxAttachment> hpfSwitchAttachment, lpfSwitchAttachment;
+    
     std::unique_ptr<juce::AudioProcessorValueTreeState::SliderAttachment> band1FreqAttachment, band1GainAttachment;
     std::unique_ptr<juce::AudioProcessorValueTreeState::SliderAttachment> band2FreqAttachment, band2GainAttachment, band2QAttachment;
     std::unique_ptr<juce::AudioProcessorValueTreeState::SliderAttachment> band3FreqAttachment, band3GainAttachment, band3QAttachment;
@@ -37,11 +46,16 @@ private:
     std::unique_ptr<juce::AudioProcessorValueTreeState::ComboBoxAttachment> hpfAttachment, lpfAttachment;
 
     // Labels
+    juce::Label inputGainLabel, outputGainLabel;
+    juce::Label hpfSwitchLabel, lpfSwitchLabel;
     juce::Label band1Label, band2Label, band3Label, band4Label, band5Label, band6Label;
     juce::Label hpfLabel, lpfLabel;
 
     void setupKnobStyle(juce::Slider& slider, bool isLarge = false);
+    void setupInputGainKnobStyle(juce::Slider& slider);
+    void setupOutputGainKnobStyle(juce::Slider& slider);
     void setupComboBoxStyle(juce::ComboBox& comboBox);
+    void setupSwitchStyle(juce::ComboBox& comboBox);
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (EQ6SAudioProcessorEditor)
 };
